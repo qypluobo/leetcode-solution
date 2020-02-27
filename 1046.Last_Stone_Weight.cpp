@@ -18,13 +18,27 @@ void swap(int* a, int* b)
     *b = tmp;
 }
 
+void heapInsert(int* stones, int k)
+{
+    int i;
+    while (k > 0) {         // 直到当前节点为根节点时退出
+        i = (k - 1) / 2;
+        if (stones[i] < stones[k]) {
+            swap(&stones[i], &stones[k]);
+            k = i;
+        } else {
+            break;
+        }
+    }
+}
+
 int lastStoneWeight(int* stones, int stonesSize){
     if (stones == NULL || stonesSize == 0) {
         return 0;
     }
 
     int* stonesHeap = (int*)malloc(sizeof(int) * stonesSize);
-    int i, j, k, ans;
+    int i, ans;
 
     memset(stonesHeap, 0, sizeof(int) * stonesSize);
 
@@ -34,23 +48,13 @@ int lastStoneWeight(int* stones, int stonesSize){
     stonesHeap[0] = stones[0];
     for (i = 1; i < stonesSize; i++) {
         stonesHeap[i] = stones[i];
-        j = i;
-        k = (j - 1) / 2;
-        while (k >= 0) {
-            if (stonesHeap[k] < stonesHeap[j]) {
-                swap(&stonesHeap[k], &stonesHeap[j]);
-                j = k;
-                k = (j - 1) / 2;
-            } else {
-                break;
-            }
-        }
+        heapInsert(stonesHeap, i);
     }
 
     printArray(stonesHeap, stonesSize);
 
     // delete
-    return 0;
+    return ans;
 }
 
 void test1()
