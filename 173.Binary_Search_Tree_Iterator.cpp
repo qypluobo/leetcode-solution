@@ -9,6 +9,7 @@ struct TreeNode {
     struct TreeNode *right;
 };
 
+#if 0
 struct MyIntHashNode {
     int key;
     struct TreeNode* treeNode;
@@ -82,6 +83,127 @@ void bSTIteratorFree(BSTIterator* obj) {
     }
     free(obj);
 }
+#else
+typedef struct {
+    struct TreeNode** nodes;
+    int count;
+    int capacity;
+} MyStack;
+
+MyStack* stackCreate()
+{
+    MyStack* stack = (MyStack*)malloc(sizeof(MyStack));
+    stack->nodes = NULL;
+    stack->count = 0;
+    stack->capacity = 0;
+    return stack;
+}
+
+void stackPush(MyStack* stack, struct TreeNode* node)
+{
+    if (stack->capacity == stack->count) {
+        struct TreeNode** tmp = (struct TreeNode**)realloc(stack->nodes, sizeof(struct TreeNode*) * (stack->count + 1));
+        if (tmp == NULL) {
+            return;
+        }
+
+        stack->capacity++;
+        stack->nodes = tmp;
+    }
+
+    stack->nodes[stack->count++] = node;
+}
+
+struct TreeNode* stackPop(MyStack* stack)
+{
+    if (stack == NULL) {
+        return NULL;
+    }
+
+    if (stack->count <= 0) {
+        return NULL;
+    }
+
+    stack->count--;
+    return stack->nodes[stack->count];
+}
+
+bool isStackEmpty(MyStack* stack)
+{
+    return stack->count == 0;
+}
+
+void stackDestroy(MyStack* stack)
+{
+    if (stack == NULL) {
+        return;
+    }
+
+    printf("stack->capacity: %d\n", stack->capacity);
+
+    if (stack->nodes != NULL) {
+        free(stack->nodes);
+    }
+    stack->count = 0;
+    stack->capacity = 0;
+    free(stack);
+}
+
+typedef struct {
+    MyStack* stack;
+} BSTIterator;
+
+
+BSTIterator* bSTIteratorCreate(struct TreeNode* root) {
+    if (root == NULL) {
+        return NULL;
+    }
+
+    BSTIterator* iterator = (BSTIterator*)malloc(sizeof(BSTIterator));
+    iterator->stack = stackCreate();
+
+    while (root != NULL) {
+        stackPush(iterator->stack, root);
+        root = root->left;
+    }
+
+    return iterator;
+}
+
+/** @return the next smallest number */
+int bSTIteratorNext(BSTIterator* obj) {
+    if (obj == NULL) {
+        return 0;
+    }
+
+    struct TreeNode* node = stackPop(obj->stack);
+    struct TreeNode* tmp = node->right;
+    while (tmp != NULL) {
+        stackPush(obj->stack, tmp);
+        tmp = tmp->left;
+    }
+
+    return node->val;
+}
+
+/** @return whether we have a next smallest number */
+bool bSTIteratorHasNext(BSTIterator* obj) {
+    if (obj == NULL) {
+        return false;
+    }
+
+    return isStackEmpty(obj->stack) == false;
+}
+
+void bSTIteratorFree(BSTIterator* obj) {
+    if (obj == NULL) {
+        return;
+    }
+
+    stackDestroy(obj->stack);
+    free(obj);
+}
+#endif
 
 void test1()
 {
@@ -113,11 +235,12 @@ void test1()
     node5.right = NULL;
 
     BSTIterator* iterator = bSTIteratorCreate(&node1);
-    printf("count: %d\n", iterator->count);
 
     while (bSTIteratorHasNext(iterator)) {
         printf("next: %d\n", bSTIteratorNext(iterator));
     }
+
+    bSTIteratorFree(iterator);
 }
 
 int main()
